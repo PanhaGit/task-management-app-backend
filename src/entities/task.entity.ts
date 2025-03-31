@@ -1,37 +1,44 @@
-import { Entity, Column, ObjectIdColumn, ObjectId } from "typeorm";
+import {Entity, Column, ObjectIdColumn, ObjectId, BeforeInsert} from "typeorm";
 
 export enum TaskStatus {
-    Pending = "Pending",
-    InProgress = "In Progress",
-    Completed = "Completed"
+    Todo = "todo",
+    InProgress = "in_progress",
+    Done = "done"
 }
+
 
 @Entity()
 export class Task {
     @ObjectIdColumn()
-    id!: ObjectId;
-
-    @Column()
-    user_id!: string;
+    _id!: ObjectId;
 
     @Column()
     title!: string;
 
-    @Column()
-    description!: string;
-
-    @Column()
-    deadline!: Date;
-
-    @Column({ type: "enum", enum: TaskStatus, default: TaskStatus.Pending })
-    status!: TaskStatus;
-
-    @Column()
+    @Column({ type: 'date' })
     start_date!: Date;
 
-    @Column()
+    @Column({ type: 'date' })
     end_date!: Date;
 
-    @Column({ default: () => "CURRENT_TIMESTAMP" })
+    @Column({
+        type: 'enum',
+        enum: TaskStatus,
+        default: TaskStatus.Todo
+    })
+    status!: TaskStatus;
+
+    @Column({ type: 'varchar', nullable: true })
+    team_id?: string;
+
+    @Column({ type: 'varchar', nullable: true })
+    assigned_id?: string;
+
+    @Column({ type: 'timestamp' })
     created_at!: Date;
+
+    @BeforeInsert()
+    setCreatedAt() {
+        this.created_at = new Date();
+    }
 }
