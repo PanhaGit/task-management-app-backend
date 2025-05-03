@@ -21,6 +21,7 @@ app.get("/", (req, res) => {
         { id: 1, name: "Tho Panha" },
         { id: 2, name: "Lean Kimlay" },
         { id: 3, name: "Sovannaroth" },
+        { id: 4, name: "Samon" },
     ];
     res.json({ list });
 });
