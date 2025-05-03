@@ -1,100 +1,84 @@
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 
-// Validate environment variables
 if (!process.env.ACCESS_TOKEN_KEY || !process.env.REFRESH_TOKEN_KEY) {
     throw new Error('Missing ACCESS_TOKEN_KEY or REFRESH_TOKEN_KEY in environment variables');
 }
 
 const middleware = {
     validateToken: (requiredPermissions = []) => {
-        return async (req, res, next) => {
+        return (req, res, next) => {
+            const authorization = req.headers.authorization;
+            let token_from_client = null;
+            if (authorization && authorization.startsWith('Bearer ')) {
+                token_from_client = authorization.split(' ')[1];
+            }
+            if (!token_from_client) {
+                return res.status(401).json({
+                    message: 'Unauthorized',
+                });
+            }
             try {
-                // Get token from header
-                const authHeader = req.headers.authorization;
-                if (!authHeader || !authHeader.startsWith('Bearer ')) {
-                    return res.status(401).json({
-                        success: false,
-                        message: 'Authentication token required',
-                    });
-                }
-
-                const token = authHeader.split(' ')[1];
-
-                // Verify token
-                const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_KEY);
-
-                // Check token expiration
-                if (decoded.exp && Date.now() >= decoded.exp * 1000) {
-                    return res.status(401).json({
-                        success: false,
-                        message: 'Token expired',
-                    });
-                }
-
-                // Attach user data to request
-                req.current_id = decoded.data.profile.id;
-                req.profile = decoded.data.profile;
-                req.auth = decoded.data.profile;
-                req.permissions = decoded.data.permissions || [];
-
-                // Check permissions if required
-                if (requiredPermissions.length > 0) {
-                    const hasPermission = requiredPermissions.some((perm) =>
-                        req.permissions.includes(perm)
-                    );
-                    if (!hasPermission) {
+                jwt.verify(token_from_client, process.env.ACCESS_TOKEN_KEY, (error, result) => {
+                    if (error) {
+                        return res.status(401).json({
+                            message: 'Unauthorized',
+                            error: error.message,
+                        });
+                    }
+                    if (!result.data?.profile?.id) {
+                        return res.status(401).json({
+                            message: 'Invalid token payload',
+                        });
+                    }
+                    req.current_id = result.data.profile.id;
+                    req.profile = {
+                        id: result.data.profile.id,
+                        email: result.data.profile.email,
+                        role_id: result.data.profile.role_id
+                    };
+                    req.permissions = result.data.permissions || [];
+                    if (requiredPermissions.length > 0 && !requiredPermissions.some(perm => req.permissions.includes(perm))) {
                         return res.status(403).json({
-                            success: false,
                             message: 'Insufficient permissions',
                         });
                     }
-                }
-
-                next();
+                    next();
+                });
             } catch (error) {
-                console.error('Authentication error:', error.message);
-
-                let message = 'Invalid token';
-                if (error.name === 'TokenExpiredError') {
-                    message = 'Token expired';
-                } else if (error.name === 'JsonWebTokenError') {
-                    message = 'Invalid token';
-                }
-
-                res.status(401).json({
-                    success: false,
-                    message: message,
+                return res.status(401).json({
+                    message: 'Unauthorized',
+                    error: error.message,
                 });
             }
         };
     },
 
-    getAccessToken: async (userData) => {
+    getAccessToken: (userData) => {
         return jwt.sign(
             {
                 data: userData,
-                exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // 24 hours
+                exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24,
             },
             process.env.ACCESS_TOKEN_KEY
         );
     },
 
-    getRefreshToken: async (userData) => {
+    getRefreshToken: (userData) => {
         return jwt.sign(
             {
                 data: { id: userData.profile.id },
-                exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // 7 days
+                exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
             },
             process.env.REFRESH_TOKEN_KEY
         );
     },
 
-    validateRefreshToken: async (token) => {
+    validateRefreshToken: (token) => {
         try {
             return jwt.verify(token, process.env.REFRESH_TOKEN_KEY);
         } catch (error) {
-            throw error;
+            throw new Error(`Invalid refresh token: ${error.message}`);
         }
     },
 };
