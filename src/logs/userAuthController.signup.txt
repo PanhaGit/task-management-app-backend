@@ -1,5 +1,0 @@
-2025-04-21T06:44:45.474Z - otp is not defined
-2025-04-21T06:45:22.139Z - otp is not defined
-2025-04-21T06:53:38.223Z - generate_otp_code is not defined
-2025-04-21T07:04:36.524Z - generate_otp_code is not defined
-2025-04-22T05:39:02.516Z - User validation failed: phone_number: Path `phone_number` is required.
