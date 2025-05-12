@@ -74,6 +74,11 @@ const UserSchema = new mongoose.Schema(
             ref: 'images_user',
             required: false,
         },
+        /** @type {String} Store token FCM */
+        fcmTokens:{
+            type: [String],
+            default: []
+        },
         /** @type {mongoose.Schema.Types.ObjectId} Reference to the user's team, nullable */
         team_id: {
             type: mongoose.Schema.Types.ObjectId,
@@ -82,7 +87,7 @@ const UserSchema = new mongoose.Schema(
         },
     },
     {
-        timestamps: true, // Automatically adds createdAt and updatedAt fields
+        timestamps: true,
     }
 );
 

@@ -9,6 +9,7 @@ const express = require('express');
 const router = express.Router();
 const authRoutes = require('../routes/auth/auth');
 const taskRoutes = require('../routes/task_router');
+const notificationRoutes = require('../routes/notification_router');
 /**
  * API v1 Routes
  * @namespace api/v1
@@ -19,6 +20,9 @@ router.use('/api/v1', authRoutes); // Now routes will be /api/v1/auth/signup, et
 
 // task
 router.use('/api/v1/task', taskRoutes);
+
+//notification
+router.use('/api/v1/notifications/', notificationRoutes);
 /**
  * Health Check Endpoint
  * @name get/status
