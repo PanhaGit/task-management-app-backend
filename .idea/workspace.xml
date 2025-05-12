@@ -4,30 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ba1c2df1-b52e-42eb-8196-df3d9089def6" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bin/www" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/node-js-task-notification-firebase-adminsdk-fbsvc-1c7eb84134.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/controllers/notificationController.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/firebase/firebase_admin.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/models/Models.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/models/Notification.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/routes/notification_router.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/services/notification_service.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/services/scheduler_service.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/node_modules/.package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/.package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/controllers/taskController.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/controllers/taskController.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/logs/taskController.createTask.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/logs/taskController.getTaskById.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/logs/userAuthController.signup.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/models/user/User.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/models/user/User.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/api.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/api.js" afterDir="false" />
-    </list>
+    <list default="true" id="ba1c2df1-b52e-42eb-8196-df3d9089def6" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -113,7 +90,7 @@
       <workItem from="1746701292899" duration="5364000" />
       <workItem from="1746717174020" duration="12148000" />
       <workItem from="1746776083329" duration="1964000" />
-      <workItem from="1747062202537" duration="5507000" />
+      <workItem from="1747062202537" duration="6225000" />
     </task>
     <servers />
   </component>
