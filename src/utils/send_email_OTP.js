@@ -8,13 +8,6 @@ const send_email_OTP = async (to_email, user_name, otp_code) => {
             throw new Error('Missing required parameters for sending OTP email');
         }
 
-        console.log('SMTP configuration:', {
-            host: process.env.MAIL_HOST,
-            port: process.env.MAIL_PORT,
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-        });
-
         const transporter = nodemailer.createTransport({
             host: process.env.MAIL_HOST,
             port: parseInt(process.env.MAIL_PORT, 10),
@@ -56,10 +49,8 @@ const send_email_OTP = async (to_email, user_name, otp_code) => {
         };
 
         const info = await transporter.sendMail(mailOptions);
-        console.log(`OTP email sent to ${to_email}: ${info.messageId}`);
         return { otp_code, messageId: info.messageId };
     } catch (error) {
-        console.error(`Failed to send OTP email to ${to_email}:`, error);
         await logError('send_email_OTP', error.message);
         throw error;
     }
