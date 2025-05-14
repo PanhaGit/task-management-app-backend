@@ -1,4 +1,4 @@
-.env
+.gitignore
 node-js-task-notification-firebase-adminsdk-fbsvc-0bc8cff08f.json
 testSmtp.js
 ./src/config/
