@@ -53,16 +53,24 @@ const TaskController = {
     // យកកិច្ចការទាំងអស់
     getAllTasks: async (req, res) => {
         try {
-            const tasks = await Task.find().populate('created_by', 'username email');
-            res.status(200).json(tasks);
+            const tasks = await Task.find({ created_by: req.current_id })
+                .populate('created_by', 'first_name last_name phone_number email');
+
+            res.status(200).json({
+                success: true,
+                data: tasks,
+                message: "Task list fetched successfully",
+            });
         } catch (e) {
-            await logError("taskController.getAllTasks", e.message);
+            await logError("taskController.getAllTasks", e.message,res);
+
             res.status(500).json({
-                error: "មិនអាចទាញយកកិច្ចការបាន",
-                details: e.message
+                success: false,
+                details: e.message,
             });
         }
     },
+
 
     // យកកិច្ចការតាម ID
     getTaskById: async (req, res) => {
