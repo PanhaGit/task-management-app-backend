@@ -7,6 +7,13 @@
     <list default="true" id="64fa8469-c5dc-4f46-b234-a86927501f18" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/node_modules/.package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/.package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/config/database.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/config/database.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/logs/send_email_OTP.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/logs/userAuthController.signup.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils/send_email_OTP.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/send_email_OTP.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -78,7 +85,7 @@
       <updated>1747141152636</updated>
       <workItem from="1747141155964" duration="1493000" />
       <workItem from="1747211783136" duration="2016000" />
-      <workItem from="1747235284947" duration="8465000" />
+      <workItem from="1747235284947" duration="7676000" />
     </task>
     <servers />
   </component>
