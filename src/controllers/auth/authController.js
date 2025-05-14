@@ -35,10 +35,7 @@ const userAuthController = {
             }
 
             const otp_code = generateOtpCode();
-
             const otp_expires_at_10 = otp_expires_at_10minute();
-
-
 
             user = new User({
                 first_name,
@@ -53,14 +50,25 @@ const userAuthController = {
             });
 
             const user_name = `${first_name} ${last_name}`;
-            // console.log(`Sending OTP to ${email} for ${user_name}`);
             await send_email_OTP(email, user_name, otp_code);
 
             const data = await user.save();
 
+
+            const userData = {
+                profile: { id: data._id, email: data.email, role_id: data.role_id },
+                permissions: [],
+            };
+            const accessToken =  middleware.getAccessToken(userData);
+            const refreshToken =  middleware.getRefreshToken(userData);
+
+            const { password: _, ...userInfo } = data._doc;
+
             res.status(201).json({
-                data,
                 message: 'User registered successfully. Please verify your email with the OTP sent.',
+                user: userInfo,
+                access_token: accessToken,
+                refresh_token: refreshToken,
             });
         } catch (err) {
             console.error('Signup error:', err);
@@ -72,6 +80,7 @@ const userAuthController = {
             });
         }
     },
+
 
     getAllUsers: async (req, res) => {
         try {
@@ -113,8 +122,8 @@ const userAuthController = {
                 profile: { id: user._id, email: user.email, role_id: user.role_id },
                 permissions: [],
             };
-            const accessToken = await middleware.getAccessToken(userData);
-            const refreshToken = await middleware.getRefreshToken(userData);
+            const accessToken =  middleware.getAccessToken(userData);
+            const refreshToken =  middleware.getRefreshToken(userData);
 
             const { password: _, ...userInfo } = user._doc;
             res.status(200).json({

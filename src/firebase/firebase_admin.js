@@ -1,6 +1,6 @@
 const admin = require('firebase-admin');
 const path = require('path');
-const serviceAccount = require('../../node-js-task-notification-firebase-adminsdk-fbsvc-1c7eb84134.json');
+const serviceAccount = require('../../node-js-task-notification-firebase-adminsdk-fbsvc-0bc8cff08f.json');
 
 
 if (!admin.apps.length) {
@@ -9,7 +9,6 @@ if (!admin.apps.length) {
     });
 }
 
-// Get initialized messaging instance
 const messaging = admin.messaging();
 
 module.exports = { admin, messaging };
