@@ -1,6 +1,6 @@
 const User = require('../../models/user/User');
 const ImagesUser = require('../../models/user/ImageUser');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { logError } = require('../../utils/logError');
 const { uploadFile, removeFile } = require('../../utils/helper');
 const generateOtpCode = require('../../utils/generate_otp_code');
@@ -12,32 +12,47 @@ const userAuthController = {
         const { first_name, last_name, dob, phone_number, email, password } = req.body;
 
         try {
-            let user = await User.findOne({ email });
-            if (user) {
-                return res.status(400).json({ message: 'User already exists' });
+            // Validate required fields
+            if (!email || !password) {
+                return res.status(400).json({ message: 'Email and password are required' });
             }
 
+            // Check if user exists
+            const existingUser = await User.findOne({ email });
+            if (existingUser) {
+                return res.status(409).json({ message: 'User already exists' });
+            }
+
+            // Hash password
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(password, salt);
 
+            // Handle image uploads
             let imageUserId = null;
-            const files = req.files;
-            const image_profile = files?.image_profile?.[0]?.filename || null;
-            const image_cover = files?.image_cover?.[0]?.filename || null;
+            if (req.files) {
+                const { image_profile, image_cover } = req.files;
+                const images = {};
 
-            if (image_profile || image_cover) {
-                const newImageUser = new ImagesUser({
-                    image_profile: image_profile ? [image_profile] : [],
-                    image_cover: image_cover ? [image_cover] : [],
-                });
-                const savedImageUser = await newImageUser.save();
-                imageUserId = savedImageUser._id;
+                if (image_profile) {
+                    images.image_profile = image_profile.map(file => file.filename);
+                }
+                if (image_cover) {
+                    images.image_cover = image_cover.map(file => file.filename);
+                }
+
+                if (Object.keys(images).length > 0) {
+                    const newImageUser = new ImagesUser(images);
+                    const savedImageUser = await newImageUser.save();
+                    imageUserId = savedImageUser._id;
+                }
             }
 
+            // Generate OTP
             const otp_code = generateOtpCode();
-            const otp_expires_at_10 = otp_expires_at_10minute();
+            const otp_expires_at = otp_expires_at_10minute();
 
-            user = new User({
+            // Create user
+            const user = new User({
                 first_name,
                 last_name,
                 dob,
@@ -46,35 +61,50 @@ const userAuthController = {
                 password: hashedPassword,
                 image_user_id: imageUserId,
                 otp_code,
-                otp_expires_at_10,
+                otp_expires_at,
             });
 
+            await user.save();
+
+            // Send OTP email
             const user_name = `${first_name} ${last_name}`;
             await send_email_OTP(email, user_name, otp_code);
 
-            const data = await user.save();
-
-
+            // Generate tokens
             const userData = {
-                profile: { id: data._id, email: data.email, role_id: data.role_id },
+                profile: {
+                    id: user._id,
+                    email: user.email,
+                    role_id: user.role_id
+                },
                 permissions: [],
             };
-            const accessToken =  middleware.getAccessToken(userData);
-            const refreshToken =  middleware.getRefreshToken(userData);
 
-            const { password: _, ...userInfo } = data._doc;
+            const accessToken = middleware.getAccessToken(userData);
+            const refreshToken = middleware.getRefreshToken(userData);
+
+            // Return response without password
+            const { password: _, ...userInfo } = user.toObject();
 
             res.status(201).json({
-                message: 'User registered successfully. Please verify your email with the OTP sent.',
-                user: userInfo,
+                message: 'User registered successfully. Please verify your email.',
+                data: userInfo,
                 access_token: accessToken,
                 refresh_token: refreshToken,
             });
+
         } catch (err) {
-            console.error('Signup error:', err);
-            await logError('userAuthController.signup', err.message, res);
-            return res.status(500).json({
-                success: false,
+            // Clean up uploaded files if error occurred
+            if (req.files) {
+                for (const fileType in req.files) {
+                    for (const file of req.files[fileType]) {
+                        await removeFile(file.filename).catch(console.error);
+                    }
+                }
+            }
+
+            await logError('userAuthController.signup', err.message);
+            res.status(500).json({
                 message: 'Server error during signup',
                 error: process.env.NODE_ENV === 'development' ? err.message : undefined,
             });
@@ -128,7 +158,7 @@ const userAuthController = {
             const { password: _, ...userInfo } = user._doc;
             res.status(200).json({
                 message: 'Login successful',
-                user: userInfo,
+                data: userInfo,
                 access_token: accessToken,
                 refresh_token: refreshToken,
             });
@@ -226,7 +256,7 @@ const userAuthController = {
             return res.status(200).json({
                 success: true,
                 message: 'User updated successfully',
-                user: updatedUser,
+                data: updatedUser,
             });
         } catch (err) {
             console.error('Edit account error:', err);
