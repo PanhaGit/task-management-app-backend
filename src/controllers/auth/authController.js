@@ -12,46 +12,39 @@ const userAuthController = {
         const { first_name, last_name, dob, phone_number, email, password } = req.body;
 
         try {
-            // Validate required fields
             if (!email || !password) {
                 return res.status(400).json({ message: 'Email and password are required' });
             }
 
-            // Check if user exists
             const existingUser = await User.findOne({ email });
             if (existingUser) {
                 return res.status(409).json({ message: 'User already exists' });
             }
 
-            // Hash password
             const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash(password, salt);
 
-            // Handle image uploads
             let imageUserId = null;
-            if (req.files) {
-                const { image_profile, image_cover } = req.files;
-                const images = {};
+            const image_profile = req.files?.image_profile || [];
+            const image_cover = req.files?.image_cover || [];
 
-                if (image_profile) {
+            if (image_profile.length || image_cover.length) {
+                const images = {};
+                if (image_profile.length) {
                     images.image_profile = image_profile.map(file => file.filename);
                 }
-                if (image_cover) {
+                if (image_cover.length) {
                     images.image_cover = image_cover.map(file => file.filename);
                 }
 
-                if (Object.keys(images).length > 0) {
-                    const newImageUser = new ImagesUser(images);
-                    const savedImageUser = await newImageUser.save();
-                    imageUserId = savedImageUser._id;
-                }
+                const newImageUser = new ImagesUser(images);
+                const savedImageUser = await newImageUser.save();
+                imageUserId = savedImageUser._id;
             }
 
-            // Generate OTP
             const otp_code = generateOtpCode();
             const otp_expires_at = otp_expires_at_10minute();
 
-            // Create user
             const user = new User({
                 first_name,
                 last_name,
@@ -66,11 +59,9 @@ const userAuthController = {
 
             await user.save();
 
-            // Send OTP email
             const user_name = `${first_name} ${last_name}`;
             await send_email_OTP(email, user_name, otp_code);
 
-            // Generate tokens
             const userData = {
                 profile: {
                     id: user._id,
@@ -83,7 +74,6 @@ const userAuthController = {
             const accessToken = middleware.getAccessToken(userData);
             const refreshToken = middleware.getRefreshToken(userData);
 
-            // Return response without password
             const { password: _, ...userInfo } = user.toObject();
 
             res.status(201).json({
@@ -94,15 +84,7 @@ const userAuthController = {
             });
 
         } catch (err) {
-            // Clean up uploaded files if error occurred
-            if (req.files) {
-                for (const fileType in req.files) {
-                    for (const file of req.files[fileType]) {
-                        await removeFile(file.filename).catch(console.error);
-                    }
-                }
-            }
-
+            await removeFile(req.files);
             await logError('userAuthController.signup', err.message);
             res.status(500).json({
                 message: 'Server error during signup',
