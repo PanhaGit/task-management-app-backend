@@ -8,90 +8,96 @@ const middleware = require('../../middlewares/authMiddleware');
 const send_email_OTP = require('../../utils/send_email_OTP');
 const otp_expires_at_10minute = require('../../utils/otp_expires_at_10minute');
 const userAuthController = {
-    signup: async (req, res) => {
-        const { first_name, last_name, dob, phone_number, email, password } = req.body;
+        signup: async (req, res) => {
+            const { first_name, last_name, dob, phone_number, email, password } = req.body;
 
-        try {
-            if (!email || !password) {
-                return res.status(400).json({ message: 'Email and password are required' });
-            }
-
-            const existingUser = await User.findOne({ email });
-            if (existingUser) {
-                return res.status(409).json({ message: 'User already exists' });
-            }
-
-            const salt = await bcrypt.genSalt(10);
-            const hashedPassword = await bcrypt.hash(password, salt);
-
-            let imageUserId = null;
-            const image_profile = req.files?.image_profile || [];
-            const image_cover = req.files?.image_cover || [];
-
-            if (image_profile.length || image_cover.length) {
-                const images = {};
-                if (image_profile.length) {
-                    images.image_profile = image_profile.map(file => file.filename);
-                }
-                if (image_cover.length) {
-                    images.image_cover = image_cover.map(file => file.filename);
+            try {
+                if (!email || !password || !first_name || !last_name || !phone_number) {
+                    return res.status(400).json({ message: 'Missing required fields' });
                 }
 
-                const newImageUser = new ImagesUser(images);
-                const savedImageUser = await newImageUser.save();
-                imageUserId = savedImageUser._id;
+                const existingUser = await User.findOne({ email });
+                if (existingUser) {
+                    return res.status(409).json({ message: 'User already exists' });
+                }
+
+                const salt = await bcrypt.genSalt(10);
+                const hashedPassword = await bcrypt.hash(password, salt);
+
+                let imageUserId = null;
+                const image_profile = req.files?.image_profile || [];
+                const image_cover = req.files?.image_cover || [];
+
+                if (image_profile.length || image_cover.length) {
+                    const images = {};
+                    if (image_profile.length) {
+                        images.image_profile = image_profile.map(file => file.filename);
+                    }
+                    if (image_cover.length) {
+                        images.image_cover = image_cover.map(file => file.filename);
+                    }
+
+                    const newImageUser = new ImagesUser(images);
+                    const savedImageUser = await newImageUser.save();
+                    imageUserId = savedImageUser._id;
+                }
+
+                const otp_code = generateOtpCode();
+                const otp_expires_at = otp_expires_at_10minute();
+
+                const userData = {
+                    first_name,
+                    last_name,
+                    phone_number,
+                    email,
+                    password: hashedPassword,
+                    image_user_id: imageUserId,
+                    otp_code,
+                    otp_expires_at,
+                };
+
+                // Add dob only if it's provided
+                if (dob) {
+                    userData.dob = dob;
+                }
+
+                const user = new User(userData);
+                await user.save();
+
+                const user_name = `${first_name} ${last_name}`;
+                await send_email_OTP(email, user_name, otp_code);
+
+                const accessPayload = {
+                    profile: {
+                        id: user._id,
+                        email: user.email,
+                        role_id: user.role_id
+                    },
+                    permissions: [],
+                };
+
+                const accessToken = middleware.getAccessToken(accessPayload);
+                const refreshToken = middleware.getRefreshToken(accessPayload);
+
+                const { password: _, ...userInfo } = user.toObject();
+
+                res.status(201).json({
+                    message: 'User registered successfully. Please verify your email.',
+                    data: userInfo,
+                    access_token: accessToken,
+                    refresh_token: refreshToken,
+                });
+
+            } catch (err) {
+                await removeFile(req.files);
+                await logError('userAuthController.signup', err.message);
+                res.status(500).json({
+                    message: 'Server error during signup',
+                    error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+                });
             }
+        },
 
-            const otp_code = generateOtpCode();
-            const otp_expires_at = otp_expires_at_10minute();
-
-            const user = new User({
-                first_name,
-                last_name,
-                dob,
-                phone_number,
-                email,
-                password: hashedPassword,
-                image_user_id: imageUserId,
-                otp_code,
-                otp_expires_at,
-            });
-
-            await user.save();
-
-            const user_name = `${first_name} ${last_name}`;
-            await send_email_OTP(email, user_name, otp_code);
-
-            const userData = {
-                profile: {
-                    id: user._id,
-                    email: user.email,
-                    role_id: user.role_id
-                },
-                permissions: [],
-            };
-
-            const accessToken = middleware.getAccessToken(userData);
-            const refreshToken = middleware.getRefreshToken(userData);
-
-            const { password: _, ...userInfo } = user.toObject();
-
-            res.status(201).json({
-                message: 'User registered successfully. Please verify your email.',
-                data: userInfo,
-                access_token: accessToken,
-                refresh_token: refreshToken,
-            });
-
-        } catch (err) {
-            await removeFile(req.files);
-            await logError('userAuthController.signup', err.message);
-            res.status(500).json({
-                message: 'Server error during signup',
-                error: process.env.NODE_ENV === 'development' ? err.message : undefined,
-            });
-        }
-    },
 
 
     getAllUsers: async (req, res) => {

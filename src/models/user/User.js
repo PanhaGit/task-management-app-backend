@@ -23,7 +23,7 @@ const UserSchema = new mongoose.Schema(
         /** @type {Date} Date of birth, required */
         dob: {
             type: Date,
-            required: true,
+            required: false,
         },
         /** @type {String} Unique phone number, required and trimmed */
         phone_number: {
