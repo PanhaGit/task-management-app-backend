@@ -1,79 +1,72 @@
 const User = require('../../models/user/User');
 const bcrypt = require('bcryptjs');
-const {logError} = require("../../utils/logError");
+const { logError } = require("../../utils/logError");
+const { validatePasswordChange } = require('../../validators/validate_password');
 
-
-const changePasswordController ={
+const changePasswordController = {
     changePassword: async (req, res) => {
-        try{
-            const {_id} = req.params;
-            const {phone_number,email,password,confirm_password,otp_code}=req.body;
-
-            if (!_id){
-                return res.status(400).json({ message: "Id is required" });
-            }
-            // if(!phone_number || !email){
-            //     return res.status(400).json({ message: "Phone number and Email are required" });
-            // }
-            // if (!phone_number){
-            //     return res.status(400).json({ message: "Phone number is required" });
-            // }
-            if (!email){
-                return res.status(400).json({ message: "Email is required" });
-            }
-            if (!password || !confirm_password){
-                return res.status(400).json({ message: "Both password and confirm password are required." });
-            }
-            if (!password){
-                return res.status(400).json({ message: "Password is required" });
-            }
-            if (!confirm_password){
-                return res.status(400).json({ message: "Password is required" });
-            }
-
-            if(password !== confirm_password){
-                return res.status(400).json({ message: "Passwords do not match." });
-            }
-
-            if(!otp_code){
-                return res.status(400).json({ message: "Otp code is required" });
-            }
-
-
-            const user = await User.findOne({
-                $or: [
-                    { email: email || null },
-                    { phone_number: phone_number || null }
-                ],
-                _id: _id
+        try {
+            // Validate request
+            const { error, value } = validatePasswordChange({
+                params: req.params,
+                body: req.body
             });
 
-            if(!user){
+            if (error) {
+                const errors = error.details.map(detail => detail.message);
                 return res.status(400).json({
                     success: false,
-                    message: "User not found."
+                    messages: errors
                 });
             }
 
+            const { _id } = value.params;
+            const { current_password, new_password } = value.body;
 
+            // Find user
+            const user = await User.findById(_id);
+            if (!user) {
+                return res.status(404).json({
+                    success: false,
+                    message: "User not found"
+                });
+            }
 
-            const new_password = await bcrypt.hash(password, 10);
+            // Verify current password
+            const isMatch = await bcrypt.compare(current_password, user.password);
+            if (!isMatch) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Current password is incorrect"
+                });
+            }
 
-            // create a new hash password
-            user.password = new_password;
+            // Check if new password is different
+            if (await bcrypt.compare(new_password, user.password)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "New password must be different from current password"
+                });
+            }
 
-            const data = await user.save();
+            // Hash and update password
+            user.password = await bcrypt.hash(new_password, 12);
+            user.passwordChangedAt = Date.now();
+            await user.save();
 
             return res.status(200).json({
                 success: true,
-                data: data,
-                message: "Password updated successfully."
-            })
+                message: "Password updated successful"
+            });
 
-        }catch (err) {
-            await logError("authPassword", err,res)
+        } catch (err) {
+            await logError("changePassword", err, res);
+            return res.status(500).json({
+                success: false,
+                message: "Internal server error"
+            });
         }
     }
-}
+};
 
-module.exports = changePasswordController
+module.exports = changePasswordController;
