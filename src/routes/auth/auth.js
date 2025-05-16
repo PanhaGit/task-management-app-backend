@@ -5,7 +5,7 @@ const changePasswordController = require('../../controllers/auth/changePasswordC
 const authMiddleware = require('../../middlewares/authMiddleware');
 const verifyOtpController = require('../../controllers/auth/verifyOtpController');
 const { uploadFile } = require('../../utils/helper');
-
+const  forgetPasswordController = require('../../controllers/auth/forgetPasswordController');
 // Signup Route
 router.post(
     '/auth/signup',
@@ -48,5 +48,9 @@ router.post(
     authMiddleware.validateToken(),
     changePasswordController.changePassword
 );
+
+// forget password
+router.post('/forget_password',forgetPasswordController.requestOtp);
+router.post('/reset_password', forgetPasswordController.resetPassword);
 
 module.exports = router;
