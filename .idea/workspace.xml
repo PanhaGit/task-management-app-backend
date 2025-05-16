@@ -5,9 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="64fa8469-c5dc-4f46-b234-a86927501f18" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/validators/validate_password.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/controllers/auth/forgetPasswordController.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/controllers/auth/changePasswordController.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/controllers/auth/changePasswordController.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/auth/auth.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/auth/auth.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,7 +49,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "dart.analysis.tool.window.visible": "false",
-    "git-widget-placeholder": "23-fix__change__password",
+    "git-widget-placeholder": "26-auth__forget__password",
     "last_opened_file_path": "C:/Learn_Code/Y3S2/assignment/mobile_app/app_mongkol_backend",
     "node.js.detected.package.eslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -89,7 +89,7 @@
       <workItem from="1747235284947" duration="7676000" />
       <workItem from="1747293661915" duration="1998000" />
       <workItem from="1747299211713" duration="2445000" />
-      <workItem from="1747376087960" duration="1347000" />
+      <workItem from="1747376087960" duration="5382000" />
     </task>
     <servers />
   </component>
