@@ -3,20 +3,13 @@ const router = express.Router();
 const taskController = require("../controllers/taskController");
 const authMiddleware = require("../middlewares/authMiddleware");
 
+router.route('/')
+    .get(authMiddleware.validateToken(), taskController.getAllTasks)
+    .post(authMiddleware.validateToken(), taskController.createTask);
 
-// Create a new task
-router.post('/',authMiddleware.validateToken(),  taskController.createTask);
-
-// Get all tasks
-router.get('/', authMiddleware.validateToken(), taskController.getAllTasks);
-
-// Get task by ID
-router.get('/:id',authMiddleware.validateToken(),  taskController.getTaskById);
-
-// Update task
-router.put('/:id', authMiddleware.validateToken(), taskController.updateTask);
-
-// Delete task
-router.delete('/:id', authMiddleware.validateToken(), taskController.deleteTask);
+router.route('/:id')
+    .get(authMiddleware.validateToken(), taskController.getTaskById)
+    .put(authMiddleware.validateToken(), taskController.updateTask)
+    .delete(authMiddleware.validateToken(), taskController.deleteTask);
 
 module.exports = router;

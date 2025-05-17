@@ -3,42 +3,47 @@ const NotificationService = require('../services/notification_service');
 const { logError } = require("../utils/logError");
 const Task = require('../models/Task');
 
+/**
+ * Scheduler Service
+ * @description Handles task reminders and notifications scheduling
+ * @author: Tho Panha
+ */
 const SchedulerService = {
-    scheduledJobs: {}, // ផ្ទុកការងារដែលបានកំណត់ពេលវេលា
+    scheduledJobs: {}, // Stores all scheduled jobs
 
-    // កំណត់ពេលវេលារំលឹកសម្រាប់កិច្ចការ
+    /**
+     * Schedule reminders for a task
+     * @param {Object} task - The task to schedule reminders for
+     * @author: Tho Panha
+     */
     async scheduleTaskReminders(task) {
         try {
-            // បោះបង់ការរំលឹកចាស់ទាំងអស់
+            // Cancel any existing reminders for this task
             this.cancelTaskReminders(task._id);
 
-            const reminderIntervals = [20, 15, 10, 5, 2]; // គិតជានាទី
+            const reminderIntervals = [20, 15, 10, 5, 2]; // Minutes before due
             const now = new Date();
             const dueDate = new Date(task.end_date);
 
-            // កំណត់ពេលវេលារំលឹកសម្រាប់កិច្ចការដែលមិនទាន់បានបញ្ចប់
+            // Schedule reminders for incomplete tasks
             if (!['done', 'complete'].includes(task.status)) {
                 reminderIntervals.forEach(minutes => {
                     const reminderTime = new Date(dueDate.getTime() - minutes * 60000);
 
-                    // កំណត់ពេលវេលារំលឹកបើវានៅអនាគត
+                    // Schedule if reminder is in the future
                     if (reminderTime > now) {
                         const job = schedule.scheduleJob(reminderTime, async () => {
                             try {
-                                // ពិនិត្យមើលកិច្ចការថ្មីៗ
                                 const freshTask = await Task.findById(task._id);
 
-                                // ផ្ញើការជូនដំណឹងបើកិច្ចការនៅតែមាន និងមិនទាន់បានបញ្ចប់
                                 if (freshTask && !['done', 'complete'].includes(freshTask.status)) {
                                     await NotificationService.sendTaskNotification(
-                                        { status: () => {} }, // ការឆ្លើយតបម៉ូក
-                                        task.created_by,
+                                        [task.created_by],
                                         task._id,
                                         'due_soon',
                                         {
-                                            minutes,
-                                            title: `កិច្ចការនឹងដល់ពេលកំណត់: ${task.title}`,
-                                            body: `កិច្ចការ "${task.title}" នឹងដល់ពេលកំណត់ក្នុងរយៈពេល ${minutes} នាទី`
+                                            title: `Task Due Soon: ${task.title}`,
+                                            body: `Task "${task.title}" is due in ${minutes} minutes`
                                         }
                                     );
                                 }
@@ -47,34 +52,38 @@ const SchedulerService = {
                             }
                         });
 
-                        // រក្សាទុកការងារដែលបានកំណត់ពេលវេលា
+                        // Store the scheduled job
                         this.scheduledJobs[`${task._id}_${minutes}`] = job;
                     }
                 });
             }
 
-            // កំណត់ពេលវេលារំលឹកពេលដល់ពេលកំណត់
+            // Schedule completion handler at end_date
             if (dueDate > now) {
                 const job = schedule.scheduleJob(dueDate, async () => {
                     try {
-                        const freshTask = await Task.findById(task._id);
-                        if (freshTask && !['done', 'complete'].includes(freshTask.status)) {
+                        const freshTask = await Task.findByIdAndUpdate(
+                            task._id,
+                            { status: 'complete' },
+                            { new: true }
+                        );
+
+                        if (freshTask) {
                             await NotificationService.sendTaskNotification(
-                                { status: () => {} },
-                                task.created_by,
+                                [task.created_by],
                                 task._id,
-                                'overdue',
+                                'completed',
                                 {
-                                    title: `កិច្ចការដល់ពេលកំណត់: ${task.title}`,
-                                    body: `កិច្ចការ "${task.title}" ដល់ពេលកំណត់ហើយ!`
+                                    title: `Task Completed: ${task.title}`,
+                                    body: `Task has been automatically marked as complete`
                                 }
                             );
                         }
                     } catch (err) {
-                        await logError("SchedulerService.dueNowJob", err);
+                        await logError("SchedulerService.completionJob", err);
                     }
                 });
-                this.scheduledJobs[`${task._id}_due_now`] = job;
+                this.scheduledJobs[`${task._id}_complete`] = job;
             }
 
         } catch (err) {
@@ -82,7 +91,11 @@ const SchedulerService = {
         }
     },
 
-    // បោះបង់ការរំលឹកសម្រាប់កិច្ចការជាក់លាក់
+    /**
+     * Cancel all reminders for a specific task
+     * @param {String} taskId - ID of the task to cancel reminders for
+     * @author: Tho Panha
+     */
     cancelTaskReminders(taskId) {
         Object.keys(this.scheduledJobs).forEach(key => {
             if (key.startsWith(taskId)) {
@@ -92,37 +105,40 @@ const SchedulerService = {
         });
     },
 
-    // កំណត់ពេលវេលារំលឹកឡើងវិញសម្រាប់កិច្ចការទាំងអស់
+    /**
+     * Reschedule reminders for all tasks
+     * @author: Tho Panha
+     */
     async rescheduleAllTasks() {
         try {
-            // បោះបង់ការងារចាស់ទាំងអស់
+            // Cancel all existing jobs
             Object.values(this.scheduledJobs).forEach(job => job.cancel());
             this.scheduledJobs = {};
 
-            // យកកិច្ចការទាំងអស់ដែលមិនទាន់បានបញ្ចប់
+            // Get all incomplete future tasks
             const tasks = await Task.find({
                 end_date: { $gt: new Date() },
                 status: { $nin: ['done', 'complete'] }
             });
 
-            // កំណត់ពេលវេលារំលឹកសម្រាប់រាល់កិច្ចការ
+            // Reschedule reminders for each task
             for (const task of tasks) {
                 await this.scheduleTaskReminders(task);
             }
 
-            // console.log(`បានកំណត់ពេលវេលារំលឹកឡើងវិញសម្រាប់ ${tasks.length} កិច្ចការ`);
         } catch (err) {
             await logError("SchedulerService.rescheduleAllTasks", err);
         }
     }
 };
 
-// កំណត់ពេលវេលារំលឹកឡើងវិញនៅពេលចាប់ផ្តើមសឺវ័រ
+// Initialize scheduling on server start
 SchedulerService.rescheduleAllTasks();
 
-// កំណត់ពេលវេលារំលឹកឡើងវិញរាល់ម៉ោង
+// Hourly maintenance job
 setInterval(() => {
+    Task.updateExpiredTasks();
     SchedulerService.rescheduleAllTasks();
-}, 60 * 60 * 1000); // 1 ម៉ោង
+}, 60 * 60 * 1000);
 
 module.exports = SchedulerService;
