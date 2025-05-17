@@ -4,7 +4,7 @@
  * @description Handles all category-related operations
  * @author: Tho Panha
  */
-const Category = require("../models/category");
+const Category = require("../models/Category");
 const { logError } = require("../utils/logError");
 
 const CategoryController = {
