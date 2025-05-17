@@ -4,9 +4,9 @@
  * @description Handles all category-related operations
  * @author: Tho Panha
  */
-const { logError } = require("../utils/logError");
 const Category = require("../models/category");
-const {populate} = require("dotenv");
+const { logError } = require("../utils/logError");
+
 const CategoryController = {
     /**
      * Get all categories for current user
