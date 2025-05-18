@@ -19,7 +19,8 @@ const TaskController = {
      */
     async createTask(req, res) {
         try {
-            const { title, description, status, start_date, end_date, hours, minutes, category_id } = req.body;
+            await taskValidator.create(req.body);
+            const { title, description, status, start_date, end_date, hours, minutes, category_id ,color } = req.body;
 
             const newTask = new Task({
                 title,
@@ -29,6 +30,7 @@ const TaskController = {
                 end_date,
                 hours: hours || 0,
                 minutes: minutes || 0,
+                color: color || "#ffffff",
                 created_by: req.current_id,
                 category_id
             });
