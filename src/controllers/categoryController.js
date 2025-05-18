@@ -1,4 +1,3 @@
-
 /**
  * Category Controller
  * @description Handles all category-related operations
@@ -17,7 +16,7 @@ const CategoryController = {
     getAll: async (req, res) => {
         try {
             const categories = await Category.find({ created_by: req.current_id })
-                .populate("created_by", "first_name last_name phone_number email title")
+                .populate("created_by", "first_name last_name phone_number email title");
 
             res.status(200).json({
                 success: true,
@@ -25,7 +24,7 @@ const CategoryController = {
                 message: "Categories fetched successfully"
             });
         } catch (err) {
-            await logError("CategoryController.getAll", err.message, res.statusCode);
+            await logError("CategoryController.getAll", err.message, 500);
             res.status(500).json({
                 success: false,
                 error: "Failed to fetch categories",
@@ -61,7 +60,7 @@ const CategoryController = {
                 message: "Category fetched successfully"
             });
         } catch (err) {
-            await logError("CategoryController.getOne", err.message, res.statusCode);
+            await logError("CategoryController.getOne", err.message, 500);
             res.status(500).json({
                 success: false,
                 error: "Failed to fetch category",
@@ -78,12 +77,27 @@ const CategoryController = {
      */
     create: async (req, res) => {
         try {
-            const { title } = req.body;
+            let { title } = req.body;
 
-            if (!title) {
+            if (!title || !title.trim()) {
                 return res.status(400).json({
                     success: false,
                     error: "Title is required"
+                });
+            }
+
+            title = title.trim();
+
+            // Case-insensitive check for existing category by same user
+            const existingCategory = await Category.findOne({
+                title: { $regex: `^${title}$`, $options: "i" },
+                created_by: req.current_id
+            });
+
+            if (existingCategory) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Category title already exists for this user"
                 });
             }
 
@@ -100,7 +114,7 @@ const CategoryController = {
                 message: "Category created successfully"
             });
         } catch (err) {
-            await logError("CategoryController.create", err.message, res.statusCode);
+            await logError("CategoryController.create", err.message, 500);
             res.status(500).json({
                 success: false,
                 error: "Failed to create category",
@@ -118,7 +132,30 @@ const CategoryController = {
     update: async (req, res) => {
         try {
             const { id } = req.params;
-            const { title } = req.body;
+            let { title } = req.body;
+
+            if (!title || !title.trim()) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Title is required"
+                });
+            }
+
+            title = title.trim();
+
+            // Check if updated title duplicates another category of the same user (excluding current category)
+            const duplicateCategory = await Category.findOne({
+                _id: { $ne: id },
+                title: { $regex: `^${title}$`, $options: "i" },
+                created_by: req.current_id
+            });
+
+            if (duplicateCategory) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Another category with this title already exists for this user"
+                });
+            }
 
             const category = await Category.findOneAndUpdate(
                 { _id: id, created_by: req.current_id },
@@ -139,7 +176,7 @@ const CategoryController = {
                 message: "Category updated successfully"
             });
         } catch (err) {
-            await logError("CategoryController.update", err.message, res.statusCode);
+            await logError("CategoryController.update", err.message, 500);
             res.status(500).json({
                 success: false,
                 error: "Failed to update category",
@@ -174,7 +211,7 @@ const CategoryController = {
                 message: "Category deleted successfully"
             });
         } catch (err) {
-            await logError("CategoryController.delete", err.message, res.statusCode);
+            await logError("CategoryController.delete", err.message, 500);
             res.status(500).json({
                 success: false,
                 error: "Failed to delete category",

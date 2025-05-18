@@ -42,6 +42,10 @@ const TaskSchema = new mongoose.Schema(
             min: 0,
             max: 59,
         },
+        color: {
+            type: String,
+            default: "#ffffff"
+        },
         created_by: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
